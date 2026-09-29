@@ -1,0 +1,54 @@
+name: Demo kiểm thử tự động
+
+# Chạy khi gửi mã lên main hoặc bấm chạy thủ công
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo-test:
+    name: Chạy kiểm thử mẫu
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Chạy 3 trường hợp kiểm thử
+        id: tests
+        run: |
+          python3 - <<'PY'
+          import unittest
+
+          # Hàm mẫu cần kiểm thử
+          def cong(a, b):
+              return a + b
+
+          class TestPhepCong(unittest.TestCase):
+              def test_so_duong(self):
+                  self.assertEqual(cong(2, 3), 5)
+
+              def test_so_am(self):
+                  self.assertEqual(cong(-2, -3), -5)
+
+              def test_so_khong(self):
+                  self.assertEqual(cong(0, 5), 5)
+
+          unittest.main(verbosity=2)
+          PY
+
+      - name: Hiển thị báo cáo
+        if: always()
+        env:
+          TEST_RESULT: ${{ steps.tests.outcome }}
+        run: |
+          {
+            echo "## Báo cáo kiểm thử demo"
+            echo ""
+            echo "- Số trường hợp: 3"
+            echo "- Kết quả bước kiểm thử: $TEST_RESULT"
+            echo "- Nhánh: $GITHUB_REF_NAME"
+            echo "- Người kích hoạt: $GITHUB_ACTOR"
+          } >> "$GITHUB_STEP_SUMMARY"
